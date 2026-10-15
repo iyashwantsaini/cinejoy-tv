@@ -42,7 +42,7 @@ jobs:
         with:
           node-version: '22'
       - name: Gradle cache and wrapper validation
-        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
       - name: Require a private repository
         env:
           REPOSITORY_PRIVATE: ${{ github.event.repository.private }}

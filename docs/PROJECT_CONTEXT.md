@@ -111,5 +111,13 @@ Local verification on 2026-10-15:
   the public certificate fingerprint is pinned in the repository variable.
 - Signing certificate SHA-256:
   `cf5fa7d3a860659c70c0dc95af1dbe66984def73323aa696e8dbda3d5a5a97e4`.
-- Hosted CI and the first draft release have not yet run at this checkpoint.
-  Verify their live status in GitHub before claiming end-to-end publication.
+- The first [hosted Verify run](https://github.com/iyashwantsaini/cinejoy-tv/actions/runs/38701219701)
+  passed on the initial bootstrap commit. It exercised Linux/Chromium fixtures,
+  release-tool tests, workflow lint and the Android build/tests/lint.
+- A runtime-deprecation notice prompted updating the Gradle/artifact Actions to
+  their Node 24 versions, still pinned to full commit IDs.
+- Initial source/workflow push used the authenticated VS Code Git integration.
+  GitHub CLI access is available for repository, secret and Actions operations;
+  CLI workflow-file pushes may separately need the `workflow` OAuth scope.
+- The first draft release is not yet verified at this checkpoint. Check its live
+  status before claiming end-to-end publication.
