@@ -147,6 +147,15 @@ gh release edit v1.0.0 --repo iyashwantsaini/cinejoy-tv --draft=false
 Publication within this private repository still requires repository access.
 It does not certify providers or eliminate the documented WebView limitations.
 
+### Homepage visibility
+
+Drafts do not appear as a homepage release, and pre-releases do not populate
+GitHub's Latest release entry. On 2026-10-15 the owner explicitly requested that
+`v1.0.0` appear on the repository homepage, so it was published and marked Latest
+after CI/signature verification, with the outstanding TCL checks still disclosed.
+The README also links directly to its APK. Future automated releases still start
+as drafts; do not interpret this visibility change as successful TV testing.
+
 ## Local release build
 
 Provide these process-scoped environment variables using your secure credential

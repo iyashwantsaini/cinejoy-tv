@@ -67,6 +67,9 @@ machine, not on TV hardware.
 
 - Main branch: `main`; version source: [version.properties](../version.properties).
 - Initial app version: `1.0.0`, Android version code `1`.
+- At the owner's request, `v1.0.0` is published as the latest release so it appears
+  on the repository homepage. The repository remains private and TCL playback
+  remains unverified; this was a visibility change, not a new binary or test result.
 - [CI](../.github/workflows/ci.yml) runs app, navigation and release-tool checks.
 - [Release workflow](../.github/workflows/release.yml) reuses those checks, requires
   a private repo and a tag on main history, checks increasing version codes,
@@ -87,8 +90,8 @@ machine, not on TV hardware.
 3. Find an authorized source that loads on the same network; verify playback,
    audio, seeking, subtitle display and pause-on-background on the TV.
 4. Test a URL change and restart persistence on-device.
-5. Only after those checks, promote a tested draft release. Do not bypass TLS,
-   DRM or provider restrictions to make a source work.
+5. Record device results before claiming the app is TV-tested or promoting future
+   versions as tested builds. Do not bypass TLS, DRM or provider restrictions.
 
 ## How to continue
 
@@ -131,9 +134,10 @@ Local verification on 2026-10-15:
 - The [complete release workflow](https://github.com/iyashwantsaini/cinejoy-tv/actions/runs/38702268402)
   passed: reusable CI, private-repo/tag/ancestry/version gates, signing,
   certificate verification, checksum packaging and draft creation.
-- The [private Releases page](https://github.com/iyashwantsaini/cinejoy-tv/releases)
-  contains draft `v1.0.0` with `Cinejoy-TV-v1.0.0.apk` and its `.sha256` file.
-  It was deliberately not promoted because the TCL checks remain outstanding.
+- The workflow initially created draft `v1.0.0` with `Cinejoy-TV-v1.0.0.apk` and its
+  `.sha256` file. The owner subsequently requested visibility on the repository
+  homepage, so it was [published and marked Latest](https://github.com/iyashwantsaini/cinejoy-tv/releases/tag/v1.0.0).
+  The same signed artifacts remain attached, and the TCL checks remain outstanding.
 - The CI-built APK was downloaded back into local `dist`, independently verified
   with Android apksigner, and matched to the original release certificate.
   Its manifest reports `pk.cinejoy.tv`, version `1.0.0` / code `1`, minimum API 23,

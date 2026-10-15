@@ -9,6 +9,15 @@ website's catalogue or streaming backend.** Settings, app menus, text entry and
 file selection are native Android UI. The catalogue, accounts, movie pages,
 server selection and subtitles remain the actual website.
 
+## Download the APK
+
+**[Download Cinejoy-TV-v1.0.0.apk](https://github.com/iyashwantsaini/cinejoy-tv/releases/download/v1.0.0/Cinejoy-TV-v1.0.0.apk)**
+| [Release details and checksum](https://github.com/iyashwantsaini/cinejoy-tv/releases/tag/v1.0.0)
+
+Sign in to GitHub with access to this private repository. The release is also
+listed under **Releases** on the repository's main page. Build/signature checks
+passed; playback on the actual TCL is still unverified.
+
 ## Project documentation
 
 - [Current project context and handoff](docs/PROJECT_CONTEXT.md)
@@ -27,8 +36,9 @@ another assistant, open the handoff explicitly.
 
 For normal installations, use the signed APK from the private repository's
 [GitHub Releases](https://github.com/iyashwantsaini/cinejoy-tv/releases).
-Releases start as drafts pending the TV checklist; maintainers can download drafts
-while signed in.
+New automated releases start as drafts pending review. The owner requested that
+`v1.0.0` be published as the latest release so the APK is easy to find on the main
+page; this does not change the outstanding TV-testing limitations.
 
 The locally built, debug-signed APK is
 [dist/Cinejoy-TV-debug.apk](dist/Cinejoy-TV-debug.apk).
