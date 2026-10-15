@@ -1,0 +1,110 @@
+name: Release APK
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  release:
+    name: Sign and create private draft release
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - name: Checkout release tag and main history
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Java 17
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Node 22
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+      - name: Gradle cache and wrapper validation
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+      - name: Require a private repository
+        env:
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          if [ "$REPOSITORY_PRIVATE" != "true" ]; then
+            echo "::error::This release workflow is restricted to a private repository."
+            exit 1
+          fi
+      - name: Check tag, version code, changelog and main ancestry
+        run: node scripts/release.mjs check-tag "$RELEASE_TAG"
+      - name: Android SDK
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"'
+      - name: Restore key, sign APK and verify certificate
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_SIGNING_CERT_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD ANDROID_SIGNING_CERT_SHA256; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing signing configuration: $name"
+              exit 1
+            fi
+          done
+          umask 077
+          export ANDROID_KEYSTORE_FILE="$RUNNER_TEMP/cinejoy-release.p12"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_FILE"
+          bash gradlew :app:assembleRelease --no-daemon --no-configuration-cache --console=plain
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs \
+            app/build/outputs/apk/release/app-release.apk > "$RUNNER_TEMP/cinejoy-signer.txt"
+          actual=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' "$RUNNER_TEMP/cinejoy-signer.txt" | tr '[:upper:]' '[:lower:]')
+          expected=$(printf '%s' "$ANDROID_SIGNING_CERT_SHA256" | tr -d ':[:space:]' | tr '[:upper:]' '[:lower:]')
+          if [[ ! "$expected" =~ ^[0-9a-f]{64}$ ]] || [ "$actual" != "$expected" ]; then
+            echo "::error::APK signing certificate does not match ANDROID_SIGNING_CERT_SHA256."
+            exit 1
+          fi
+      - name: Package APK, checksum and release notes
+        run: node scripts/release.mjs package app/build/outputs/apk/release/app-release.apk
+      - name: Create or update an unpublished draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          apk="dist/Cinejoy-TV-$RELEASE_TAG.apk"
+          if gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft > "$RUNNER_TEMP/cinejoy-draft.txt"; then
+            if ! grep -qx true "$RUNNER_TEMP/cinejoy-draft.txt"; then
+              echo "::error::Published releases are immutable. Bump the version and create a new tag."
+              exit 1
+            fi
+            gh release upload "$RELEASE_TAG" "$apk" "$apk.sha256" --clobber
+            gh release edit "$RELEASE_TAG" --notes-file dist/release-notes.md
+          else
+            flags=()
+            if [[ "$RELEASE_TAG" == *-* ]]; then flags+=(--prerelease); fi
+            gh release create "$RELEASE_TAG" "$apk" "$apk.sha256" \
+              --verify-tag --draft --title "Cinejoy TV $RELEASE_TAG" \
+              --notes-file dist/release-notes.md "${flags[@]}"
+          fi
+      - name: Remove the temporary signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cinejoy-release.p12"

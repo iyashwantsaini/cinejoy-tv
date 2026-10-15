@@ -1,0 +1,74 @@
+plugins {
+    id 'com.android.application'
+}
+
+def appVersion = new Properties()
+rootProject.file('version.properties').withInputStream { appVersion.load(it) }
+def appVersionName = appVersion.getProperty('VERSION_NAME')
+def appVersionCode = appVersion.getProperty('VERSION_CODE')?.toInteger()
+if (!appVersionName || !appVersionCode || appVersionCode < 1 || appVersionCode > 2100000000) {
+    throw new GradleException('version.properties must contain VERSION_NAME and a valid positive VERSION_CODE.')
+}
+
+def signingEnvironment = [
+    'ANDROID_KEYSTORE_FILE', 'ANDROID_KEYSTORE_PASSWORD', 'ANDROID_KEY_ALIAS', 'ANDROID_KEY_PASSWORD'
+].collectEntries { name -> [(name): System.getenv(name)] }
+def hasReleaseSigning = signingEnvironment.values().every { it != null && !it.isEmpty() }
+
+android {
+    namespace 'pk.cinejoy.tv'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'pk.cinejoy.tv'
+        minSdk 23
+        targetSdk 35
+        versionCode appVersionCode
+        versionName appVersionName
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                storeFile file(signingEnvironment.ANDROID_KEYSTORE_FILE)
+                storePassword signingEnvironment.ANDROID_KEYSTORE_PASSWORD
+                keyAlias signingEnvironment.ANDROID_KEY_ALIAS
+                keyPassword signingEnvironment.ANDROID_KEY_PASSWORD
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint {
+        abortOnError true
+    }
+}
+
+def validateReleaseSigning = tasks.register('validateReleaseSigning') {
+    doLast {
+        def missing = signingEnvironment.findAll { key, value -> value == null || value.isEmpty() }.keySet()
+        if (!missing.isEmpty()) {
+            throw new GradleException("Release signing requires these environment variables: ${missing.join(', ')}")
+        }
+        if (!file(signingEnvironment.ANDROID_KEYSTORE_FILE).isFile()) {
+            throw new GradleException('ANDROID_KEYSTORE_FILE must point to an existing keystore.')
+        }
+    }
+}
+tasks.configureEach {
+    if (name == 'preReleaseBuild') dependsOn(validateReleaseSigning)
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+    testImplementation 'junit:junit:4.13.2'
+}
