@@ -119,5 +119,26 @@ Local verification on 2026-10-15:
 - Initial source/workflow push used the authenticated VS Code Git integration.
   GitHub CLI access is available for repository, secret and Actions operations;
   CLI workflow-file pushes may separately need the `workflow` OAuth scope.
-- The first draft release is not yet verified at this checkpoint. Check its live
-  status before claiming end-to-end publication.
+- Re-running signing bootstrap preserved the identical keystore; it does not
+  silently rotate the signing identity.
+- Private-branch protection was unavailable on this account's GitHub plan (403).
+  The repo remains private, with read-only default Actions permissions. Release
+  verification/signing gates remain active without repository-level protection.
+- [Updated hosted Verify](https://github.com/iyashwantsaini/cinejoy-tv/actions/runs/38701925395)
+  passed with the current Actions runtimes.
+- Annotated tag `v1.0.0` points to release commit
+  `69a5e3c8ff627688ec3e34366548985cb00c31c1`.
+- The [complete release workflow](https://github.com/iyashwantsaini/cinejoy-tv/actions/runs/38702268402)
+  passed: reusable CI, private-repo/tag/ancestry/version gates, signing,
+  certificate verification, checksum packaging and draft creation.
+- The [private Releases page](https://github.com/iyashwantsaini/cinejoy-tv/releases)
+  contains draft `v1.0.0` with `Cinejoy-TV-v1.0.0.apk` and its `.sha256` file.
+  It was deliberately not promoted because the TCL checks remain outstanding.
+- The CI-built APK was downloaded back into local `dist`, independently verified
+  with Android apksigner, and matched to the original release certificate.
+  Its manifest reports `pk.cinejoy.tv`, version `1.0.0` / code `1`, minimum API 23,
+  target API 35 and an Android TV launcher entry.
+- CI-built APK SHA-256:
+  `a0bbb0817aaa88c57d424be65319dfa83e3b10d086b3906a71dea4ffa02a44de`.
+- Final follow-up commits only record these results and harden file exclusions;
+  they do not change the app binary associated with the initial tag.

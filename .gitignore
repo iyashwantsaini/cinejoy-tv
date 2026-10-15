@@ -11,6 +11,7 @@ dist/
 *.keystore
 *.p12
 *.pfx
+*.clixml
 *.apk
 *.aab
 *.b64

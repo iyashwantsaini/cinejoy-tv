@@ -98,10 +98,16 @@ gh secret list --repo iyashwantsaini/cinejoy-tv
 gh variable list --repo iyashwantsaini/cinejoy-tv
 ```
 
-On a GitHub plan supporting private-repo rulesets, require the Verify job for PR
-merges and protect release tags. Do not bypass a failing required check. Even
-without plan-level protection, the release workflow itself runs verification and
-checks main ancestry before accessing the signing key.
+The current account's plan rejected private-repository branch protection with
+HTTP 403 on 2026-10-15. The repository was kept private; no plan upgrade or
+visibility change was made. Therefore required PR checks and tag protection are
+not currently enforced by a repository ruleset.
+
+On a plan supporting private-repo protection, require the `Android and navigation
+checks` check for PR merges, disable force pushes/deletions on main, and protect
+release tags. Until then, use PRs and green checks as the development policy.
+The release workflow itself still reruns verification and checks main ancestry
+before accessing the signing key, regardless of branch-protection availability.
 
 ## Cut a release
 
